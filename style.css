@@ -1,0 +1,271 @@
+/* الألوان كلها tokens: فاتح افتراضي، وداكن تلقائي حسب إعداد الجهاز أو بزرار المظهر */
+:root {
+  --brand: #0f766e;
+  --on-brand: #ffffff;
+  --in: #15803d;
+  --out: #b91c1c;
+  --in-btn: #15803d;
+  --out-btn: #b91c1c;
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --scrim: rgba(0, 0, 0, .45);
+  --shadow: rgba(0, 0, 0, .25);
+  --radius: 14px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --brand: #2dd4bf;
+    --on-brand: #05201c;
+    --in: #4ade80;
+    --out: #fb8a80;
+    --bg: #0e1514;
+    --card: #172220;
+    --text: #e6edeb;
+    --muted: #98a9a5;
+    --line: #2b3b38;
+    --scrim: rgba(0, 0, 0, .65);
+    --shadow: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --brand: #2dd4bf;
+  --on-brand: #05201c;
+  --in: #4ade80;
+  --out: #fb8a80;
+  --bg: #0e1514;
+  --card: #172220;
+  --text: #e6edeb;
+  --muted: #98a9a5;
+  --line: #2b3b38;
+  --scrim: rgba(0, 0, 0, .65);
+  --shadow: rgba(0, 0, 0, .6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Tahoma, "Noto Naskh Arabic", system-ui, sans-serif;
+  font-size: 16px;
+}
+button, input { color: inherit; }
+:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+.screen {
+  max-width: 520px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 0 16px 100px;
+}
+.hidden { display: none !important; }
+.center { text-align: center; }
+.muted { color: var(--muted); }
+
+/* الشريط العلوي */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 12px;
+}
+.topbar h2 { margin: 0; font-size: 20px; }
+.bar-actions { display: flex; gap: 8px; }
+.icon-btn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  width: 40px; height: 40px;
+  font-size: 18px;
+  cursor: pointer;
+}
+.icon-btn.theme-toggle { width: auto; padding: 0 12px; font-size: 14px; font-weight: 600; }
+
+/* الأزرار */
+.btn {
+  border: 0;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-ghost { background: var(--line); color: var(--text); }
+.btn-in { background: var(--in-btn); color: #fff; }
+.btn-out { background: var(--out-btn); color: #fff; }
+.btn-google { background: var(--card); color: var(--text); border: 1px solid var(--line); }
+.link {
+  background: none; border: 0; color: var(--brand);
+  font-size: 14px; margin-top: 12px; cursor: pointer;
+}
+
+/* الحقول */
+input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: 16px;
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+}
+input::placeholder { color: var(--muted); }
+input:focus { outline: 2px solid var(--brand); border-color: transparent; }
+.search { margin: 14px 0; }
+
+/* الدخول */
+.login-box { padding-top: 14vh; text-align: center; }
+.login-box .logo { font-size: 56px; }
+.login-box h1 { margin: 6px 0; }
+.login-box .btn { margin-bottom: 10px; }
+.divider {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--muted); margin: 14px 0; font-size: 14px;
+}
+.divider::before, .divider::after {
+  content: ""; flex: 1; height: 1px; background: var(--line);
+}
+
+/* الملخص */
+.summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex; flex-direction: column; gap: 6px;
+  border: 1px solid var(--line);
+}
+.card span { color: var(--muted); font-size: 14px; }
+.card strong { font-size: 24px; }
+.card-in strong { color: var(--in); }
+.card-out strong { color: var(--out); }
+
+/* القوائم */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer;
+}
+.item .name { font-weight: 600; }
+.item .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.amount-in { color: var(--in); font-weight: 700; }
+.amount-out { color: var(--out); font-weight: 700; }
+.amount-zero { color: var(--muted); font-weight: 700; }
+
+.section-title { margin: 22px 0 10px; font-size: 16px; color: var(--muted); }
+
+.balance-box {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.balance-box .label { color: var(--muted); font-size: 14px; }
+.balance-box .value { font-size: 32px; font-weight: 800; margin-top: 6px; }
+
+.two-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* زرار الإضافة العائم */
+.fab {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  left: 20px;
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 30px;
+  box-shadow: 0 6px 16px var(--shadow);
+  cursor: pointer;
+}
+
+/* النوافذ */
+.modal {
+  position: fixed; inset: 0;
+  background: var(--scrim);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 10;
+}
+.sheet {
+  background: var(--card);
+  color: var(--text);
+  width: 100%; max-width: 520px;
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+}
+.sheet h3 { margin: 0 0 14px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* مربعا ليا / عليا بقوا أزرار فلترة */
+button.card {
+  font: inherit; color: inherit; text-align: start;
+  width: 100%; cursor: pointer;
+}
+button.card strong { font-size: 24px; }
+.card-in[aria-pressed="true"] { border-color: var(--in); box-shadow: 0 0 0 1px var(--in); }
+.card-out[aria-pressed="true"] { border-color: var(--out); box-shadow: 0 0 0 1px var(--out); }
+.filter-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 12px; color: var(--muted); font-size: 14px;
+}
+.filter-bar .link { margin-top: 0; font-weight: 700; white-space: nowrap; }
+
+/* الدخول والرسايل */
+.msg { min-height: 1.4em; margin: 6px 0; font-size: 14px; color: var(--out); }
+.msg.ok { color: var(--in); }
+.user-line { margin: 0 0 8px; font-size: 13px; overflow-wrap: anywhere; }
+.btn:disabled { opacity: .6; cursor: wait; }
+
+/* ---------- الخطوات 3-6: مواعيد، تعديل، رسايل ---------- */
+:root { --warn: #b45309; --warn-bg: #fdf0dc; --out-bg: #fbe6e4; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --warn: #fbbf24; --warn-bg: #3a2a0c; --out-bg: #3a1a17; }
+}
+:root[data-theme="dark"] { --warn: #fbbf24; --warn-bg: #3a2a0c; --out-bg: #3a1a17; }
+
+.icon-btn.wide { width: auto; padding: 0 12px; font-size: 14px; font-weight: 600; }
+.lbl { display: block; font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
+.link.danger { color: var(--out); display: block; margin: 10px auto 0; }
+.link.danger.armed { font-weight: 800; }
+.sheet { max-height: 100%; overflow-y: auto; }
+.sheet .link { margin-top: 0; }
+#t-all { display: block; margin: -4px 0 6px; padding: 0; }
+
+.due-box { margin-top: 6px; }
+.due-box .section-title { margin-top: 14px; }
+.due-badge { padding: 2px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.due-badge.late { background: var(--out-bg); color: var(--out); }
+.due-badge.today, .due-badge.soon { background: var(--warn-bg); color: var(--warn); }
+.due-line { text-align: center; margin: -4px 0 14px; font-size: 14px; color: var(--warn); font-weight: 600; }
+.due-line.late { color: var(--out); }
+.settle { margin-top: 12px; }
+#person-phone { margin: 0 0 10px; }
+#person-phone a { color: var(--brand); font-weight: 600; text-decoration: none; }
+.item:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  background: var(--text); color: var(--bg);
+  padding: 10px 16px; border-radius: 12px; font-size: 14px;
+  z-index: 30; max-width: 90vw; text-align: center;
+}
+.toast.error { background: var(--out-btn); color: #fff; }

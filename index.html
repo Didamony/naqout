@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <meta name="color-scheme" content="light dark">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="النقوط">
+  <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+  <title>دفتر النقوط</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- جاري التحميل (لحد ما Firebase يعرف إنت مسجل ولا لا) -->
+  <section id="screen-loading" class="screen">
+    <p class="muted center" style="padding-top:30vh">جاري التحميل...</p>
+  </section>
+
+  <!-- الدخول -->
+  <section id="screen-login" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">📒</div>
+      <h1>دفتر النقوط</h1>
+      <p class="muted">سجّل دخولك عشان تفتح دفترك من أي موبايل</p>
+      <button class="btn btn-google" id="btn-google" type="button">الدخول بحساب جوجل</button>
+      <div class="divider"><span>أو</span></div>
+      <input type="email" id="login-email" placeholder="الإيميل" autocomplete="email">
+      <input type="password" id="login-pass" placeholder="كلمة السر" autocomplete="current-password">
+      <p class="msg" id="login-msg" role="status"></p>
+      <button class="btn btn-primary" id="btn-login" type="button">دخول</button>
+      <button class="link" id="btn-forgot" type="button">نسيت كلمة السر؟</button>
+      <button class="link" id="btn-register" type="button">مفيش حساب؟ سجّل بالإيميل</button>
+      <button class="link theme-toggle" type="button"></button>
+    </div>
+  </section>
+
+  <!-- الرئيسية -->
+  <section id="screen-home" class="screen hidden">
+    <header class="topbar">
+      <h2>دفتر النقوط</h2>
+      <div class="bar-actions">
+        <button class="icon-btn wide theme-toggle" type="button"></button>
+        <button class="icon-btn wide" id="btn-export" type="button">تصدير</button>
+        <button class="icon-btn wide" id="btn-logout" type="button">خروج</button>
+      </div>
+    </header>
+    <p class="muted user-line"><span id="user-email"></span> • <span id="sync-line"></span></p>
+    <p class="msg hidden" id="data-error" role="alert"></p>
+
+    <div class="summary">
+      <button class="card card-in" id="card-in" type="button" aria-pressed="false"><span>ليا</span><strong id="sum-in">0</strong></button>
+      <button class="card card-out" id="card-out" type="button" aria-pressed="false"><span>عليا</span><strong id="sum-out">0</strong></button>
+    </div>
+    <div class="filter-bar hidden" id="filter-bar">
+      <span id="filter-label"></span>
+      <button class="link" id="btn-clear-filter" type="button">الكل</button>
+    </div>
+
+    <div class="due-box hidden" id="due-box">
+      <h3 class="section-title">مواعيد السداد</h3>
+      <ul class="list" id="due-list"></ul>
+    </div>
+
+    <input type="search" id="search" class="search" placeholder="🔍 ابحث بالاسم..." aria-label="بحث بالاسم">
+
+    <ul id="people-list" class="list"></ul>
+    <p id="empty-people" class="muted center hidden"></p>
+
+    <button class="fab" id="btn-add-person" type="button" title="إضافة شخص">+</button>
+  </section>
+
+  <!-- صفحة الشخص -->
+  <section id="screen-person" class="screen hidden">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-back" type="button" aria-label="رجوع">→</button>
+      <h2 id="person-name"></h2>
+      <button class="icon-btn wide" id="btn-edit-person" type="button">تعديل</button>
+    </header>
+
+    <p class="center hidden" id="person-phone"></p>
+    <div class="balance-box" id="person-balance"></div>
+    <p class="due-line hidden" id="person-due"></p>
+
+    <div class="two-btns">
+      <button class="btn btn-in" id="btn-add-in" type="button">+ ليا</button>
+      <button class="btn btn-out" id="btn-add-out" type="button">+ عليا</button>
+    </div>
+
+    <h3 class="section-title">المعاملات (دوس على أي معاملة للتعديل أو الحذف)</h3>
+    <ul id="tx-list" class="list"></ul>
+    <p id="empty-tx" class="muted center hidden">مفيش معاملات لسه.</p>
+  </section>
+
+  <!-- نافذة إضافة / تعديل شخص -->
+  <div id="modal-person" class="modal hidden">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="p-title">
+      <h3 id="p-title">شخص جديد</h3>
+      <input type="text" id="p-name" placeholder="الاسم" autocomplete="off">
+      <input type="tel" id="p-phone" placeholder="رقم التليفون (اختياري)" dir="ltr" style="text-align:right">
+      <label class="lbl" for="p-due">موعد السداد (اختياري)</label>
+      <input type="date" id="p-due">
+      <p class="msg" id="p-msg" role="status"></p>
+      <div class="row">
+        <button class="btn btn-primary" id="p-save" type="button">حفظ</button>
+        <button class="btn btn-ghost" data-close type="button">إلغاء</button>
+      </div>
+      <button class="link danger hidden" id="p-delete" type="button">حذف الشخص وكل معاملاته</button>
+    </div>
+  </div>
+
+  <!-- نافذة إضافة / تعديل معاملة -->
+  <div id="modal-tx" class="modal hidden">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tx-title">
+      <h3 id="tx-title">معاملة جديدة</h3>
+      <input type="number" id="t-amount" placeholder="المبلغ" inputmode="decimal" min="0" step="any">
+      <label class="lbl" for="t-date">التاريخ</label>
+      <input type="date" id="t-date">
+      <input type="text" id="t-note" placeholder="ملاحظة (اختياري)" autocomplete="off">
+      <div id="t-due-wrap">
+        <label class="lbl" for="t-due">موعد السداد (اختياري)</label>
+        <input type="date" id="t-due">
+      </div>
+      <p class="msg" id="t-msg" role="status"></p>
+      <div class="row">
+        <button class="btn btn-primary" id="t-save" type="button">حفظ</button>
+        <button class="btn btn-ghost" data-close type="button">إلغاء</button>
+      </div>
+      <button class="link danger hidden" id="t-delete" type="button">حذف المعاملة</button>
+    </div>
+  </div>
+
+  <div class="toast hidden" id="toast" role="status"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
