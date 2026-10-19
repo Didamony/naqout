@@ -1,7 +1,8 @@
 // دفتر النقوط: ليا / عليا، مع حفظ في Firestore ومزامنة بين الأجهزة.
 // الدخول: auth.js (Firebase Auth). الحفظ: db.js (Firestore). الباقي هنا.
-import { configured, watchAuth, googleLogin, emailLogin, emailRegister, resetPassword, logout, errorText } from './auth.js';
+import { configured, watchAuth, emailLogin, emailRegister, resetPassword, resendVerification, reloadCurrentUser, logout, errorText } from './auth.js';
 import { subscribe, newId, savePerson, saveTx, removeTx, removePerson } from './db.js';
+import { watchAccess, watchPayment, submitPayment, isAdminUser, refCode, IPA, PRICE } from './billing.js';
 
 // رصيد الشخص = مجموع (ليا) − مجموع (عليا). السداد بيتسجل كمعاملة عكسية (kind = 'payment').
 const state = {
@@ -35,7 +36,7 @@ const fmtDate = (s) => {
   const [y, m, d] = s.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 };
-const dueText = (d) => d < 0 ? 'متأخر ' + fmt(-d) + ' يوم' : d === 0 ? 'النهاردة' : d === 1 ? 'بكرة' : 'بعد ' + fmt(d) + ' يوم';
+const dueText = (d) => d < 0 ? 'متأخر ' + fmt(-d) + ' يوم' : d === 0 ? 'اليوم' : d === 1 ? 'غدًا' : 'بعد ' + fmt(d) + ' يوم';
 const byName = (a, b) => a.name.localeCompare(b.name, 'ar');
 
 const signed = (t) => (t.type === 'in' ? t.amount : -t.amount);
@@ -55,7 +56,7 @@ function balCell(b) {
 }
 
 // ---------- التنقل ----------
-const SCREENS = ['screen-loading', 'screen-login', 'screen-home', 'screen-person'];
+const SCREENS = ['screen-loading', 'screen-login', 'screen-verify', 'screen-locked', 'screen-home', 'screen-person'];
 function show(id) {
   state.screen = id;
   SCREENS.forEach((s) => $(s).classList.toggle('hidden', s !== id));
@@ -80,8 +81,8 @@ function toast(msg, isError) {
 
 function writeError(e) {
   return e && e.code === 'permission-denied'
-    ? 'مش قادر يحفظ: قواعد Firestore مش متظبطة. راجع الدليل.'
-    : 'حصلت مشكلة في الحفظ. جرّب تاني.';
+    ? 'تعذّر الحفظ: قواعد Firestore غير مضبوطة. راجع الدليل.'
+    : 'حدثت مشكلة أثناء الحفظ. حاول مرة أخرى.';
 }
 const persist = (promise) => { Promise.resolve(promise).catch((e) => toast(writeError(e), true)); };
 
@@ -89,18 +90,18 @@ function onDataError(e) {
   const code = e && e.code;
   const el = $('data-error');
   el.textContent = code === 'permission-denied'
-    ? 'مش مسموح بقراءة الداتا. اتأكد إن قواعد Firestore اتنشرت (Firestore Database ← Rules ← Publish).'
+    ? 'غير مسموح بقراءة البيانات. تأكد من نشر قواعد Firestore (Firestore Database ← Rules ← Publish).'
     : code === 'unavailable'
-      ? 'مفيش اتصال بقاعدة البيانات دلوقتي. هيحاول تاني لوحده.'
-      : 'حصلت مشكلة في تحميل الداتا (' + (code || 'unknown') + ').';
+      ? 'لا يوجد اتصال بقاعدة البيانات الآن. ستتم المحاولة تلقائيًا.'
+      : 'حدثت مشكلة في تحميل البيانات (' + (code || 'unknown') + ').';
   el.classList.remove('hidden');
 }
 
 function updateSync() {
   let text;
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) text = 'أوفلاين: التعديلات هتتزامن لما النت يرجع';
-  else if (state.pending.people || state.pending.txs) text = 'بيتحفظ...';
-  else if (!state.loaded.people || !state.loaded.txs) text = 'بيحمّل...';
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) text = 'غير متصل: ستتم مزامنة التعديلات عند عودة الاتصال';
+  else if (state.pending.people || state.pending.txs) text = 'جارٍ الحفظ...';
+  else if (!state.loaded.people || !state.loaded.txs) text = 'جارٍ التحميل...';
   else text = '✓ متزامن';
   $('sync-line').textContent = text;
 }
@@ -159,7 +160,7 @@ function renderHome() {
   $('filter-bar').classList.toggle('hidden', !state.filter);
   if (state.filter) {
     $('filter-label').textContent =
-      (state.filter === 'in' ? 'اللي ليك عندهم' : 'اللي عليك ليهم') + ' — ' + fmt(shown.length) + ' شخص، الأكبر مبلغاً الأول';
+      (state.filter === 'in' ? 'من لك عندهم' : 'من عليك لهم') + ' — ' + fmt(shown.length) + ' شخص، الأكبر مبلغاً الأول';
   }
 
   const list = $('people-list');
@@ -182,10 +183,10 @@ function renderHome() {
   if (shown.length === 0) {
     emptyEl.textContent =
       !state.loaded.people ? 'جاري تحميل دفترك...'
-      : state.people.length === 0 ? 'مفيش أشخاص لسه. اضغط + وضيف أول شخص.'
-      : state.filter === 'in' ? 'مفيش حد ليك عنده فلوس دلوقتي.'
-      : state.filter === 'out' ? 'مفيش حد عليك له فلوس دلوقتي.'
-      : 'مفيش اسم بالشكل ده.';
+      : state.people.length === 0 ? 'لا يوجد أشخاص بعد. اضغط + وأضف أول شخص.'
+      : state.filter === 'in' ? 'لا أحد لك عنده مال الآن.'
+      : state.filter === 'out' ? 'لا أحد له عليك مال الآن.'
+      : 'لا يوجد اسم بهذا الشكل.';
   }
   emptyEl.classList.toggle('hidden', shown.length > 0);
 }
@@ -217,7 +218,7 @@ function renderPerson() {
   }
 
   const cls = bal > 0 ? 'amount-in' : bal < 0 ? 'amount-out' : 'amount-zero';
-  const label = bal > 0 ? 'ليا عنده' : bal < 0 ? 'عليا ليه' : 'الرصيد';
+  const label = bal > 0 ? 'لك عنده' : bal < 0 ? 'عليك له' : 'الرصيد';
   $('person-balance').innerHTML = '<div class="label">' + label + '</div><div class="value ' + cls + '">' + fmt(Math.abs(bal)) + '</div>';
 
   const dueEl = $('person-due');
@@ -270,7 +271,7 @@ function resetDelete(btn, label) {
 function confirmThen(btn, label, action) {
   if (btn.dataset.armed) { action(); return; }
   btn.dataset.armed = '1';
-  btn.textContent = 'تأكيد الحذف؟ دوس تاني';
+  btn.textContent = 'تأكيد الحذف؟ اضغط مرة أخرى';
   btn.classList.add('armed');
   setTimeout(() => resetDelete(btn, label), 4000);
 }
@@ -296,7 +297,7 @@ $('p-save').onclick = () => {
   const name = norm($('p-name').value);
   if (!name) return setMsg2('p-msg', 'اكتب الاسم.');
   const dup = state.people.some((p) => p.id !== state.personEdit && p.name.toLowerCase() === name.toLowerCase());
-  if (dup) return setMsg2('p-msg', 'الاسم ده موجود بالفعل. افتحه وسجّل عليه.');
+  if (dup) return setMsg2('p-msg', 'هذا الاسم موجود بالفعل. افتحه وسجّل عليه.');
   const data = { name, phone: norm($('p-phone').value), dueDate: $('p-due').value || '' };
   const old = state.personEdit ? personById(state.personEdit) : null;
   const person = old ? { ...old, ...data } : { id: newId(state.uid), ...data, createdAt: Date.now() };
@@ -329,7 +330,7 @@ function openTxSheet(opts) {
   const { type, kind } = state.sheet;
   const what = kind === 'payment'
     ? (type === 'out' ? 'سداد من ' + p.name : 'سداد لـ ' + p.name)
-    : (type === 'in' ? 'ليا (هو مديون لي)' : 'عليا (أنا مديون له)');
+    : (type === 'in' ? 'ليا (هو مدين لي)' : 'عليا (أنا مدين له)');
   $('tx-title').textContent = (edit ? 'تعديل: ' : '') + what;
   $('t-amount').value = edit ? edit.amount : '';
   $('t-date').value = edit ? edit.date : today();
@@ -395,11 +396,11 @@ async function exportExcel(btn) {
     await loadSheetJS();
     const bal = balances();
     let totalIn = 0, totalOut = 0;
-    const peopleRows = [['الاسم', 'التليفون', 'المبلغ', 'الحالة', 'موعد السداد']];
+    const peopleRows = [['الاسم', 'الهاتف', 'المبلغ', 'الحالة', 'موعد السداد']];
     state.people.slice().sort(byName).forEach((p) => {
       const b = bal[p.id] || 0;
       if (b > 0) totalIn += b; else if (b < 0) totalOut -= b;
-      peopleRows.push([p.name, p.phone || '', Math.abs(b), b > 0 ? 'ليا عنده' : b < 0 ? 'عليا ليه' : 'متساوي', p.dueDate || '']);
+      peopleRows.push([p.name, p.phone || '', Math.abs(b), b > 0 ? 'لك عنده' : b < 0 ? 'عليك له' : 'متساوي', p.dueDate || '']);
     });
     const names = {};
     state.people.forEach((p) => { names[p.id] = p.name; });
@@ -423,7 +424,7 @@ async function exportExcel(btn) {
     X.writeFile(wb, 'naqout-' + today() + '.xlsx');
     toast('تم تجهيز ملف Excel.');
   } catch (e) {
-    toast('معرفتش أجهّز ملف Excel. اتأكد من النت وجرّب تاني.', true);
+    toast('تعذّر تجهيز ملف Excel. تأكد من الاتصال وحاول مرة أخرى.', true);
   } finally {
     btn.disabled = false;
   }
@@ -481,32 +482,52 @@ async function busy(btn, fn) {
 
 const creds = () => ({ email: $('login-email').value.trim(), pass: $('login-pass').value });
 
-$('btn-google').onclick = (e) => busy(e.currentTarget, googleLogin);
+// وضعان في شاشة الدخول: تسجيل الدخول، وإنشاء حساب جديد
+function loginMode(register) {
+  $('login-pass2').classList.toggle('hidden', !register);
+  $('btn-login').classList.toggle('hidden', register);
+  $('btn-register').classList.toggle('hidden', !register);
+  $('btn-forgot').classList.toggle('hidden', register);
+  $('btn-to-register').classList.toggle('hidden', register);
+  $('btn-to-login').classList.toggle('hidden', !register);
+  $('login-pass').autocomplete = register ? 'new-password' : 'current-password';
+  $('login-sub').textContent = register
+    ? 'أنشئ حسابًا ببريدك الإلكتروني وكلمة مرور من 6 أحرف أو أرقام على الأقل. ستصلك رسالة تأكيد على بريدك، ولا يُفتح حسابك إلا بعد تأكيدها.'
+    : 'سجّل الدخول ببريدك الإلكتروني وكلمة المرور لتفتح دفترك من أي هاتف.';
+  $('login-note').textContent = register
+    ? 'يصلح أي بريد إلكتروني تملكه، والمهم أن تؤكده من الرسالة.'
+    : 'بياناتك لا يراها غيرك، ولا يُفتح حسابك إلا بكلمة المرور.';
+  $('login-pass2').value = '';
+  setMsg('');
+}
+$('btn-to-register').onclick = () => loginMode(true);
+$('btn-to-login').onclick = () => loginMode(false);
 
 $('btn-login').onclick = (e) => busy(e.currentTarget, async () => {
   const { email, pass } = creds();
-  if (!email || !pass) return setMsg('اكتب الإيميل وكلمة السر.');
+  if (!email || !pass) return setMsg('اكتب البريد الإلكتروني وكلمة المرور.');
   await emailLogin(email, pass);
 });
 
 $('btn-register').onclick = (e) => busy(e.currentTarget, async () => {
   const { email, pass } = creds();
-  if (!email || !pass) return setMsg('اكتب الإيميل وكلمة السر اللي عايزها لحسابك الجديد.');
+  if (!email || !pass) return setMsg('اكتب البريد الإلكتروني وكلمة المرور لحسابك الجديد.');
+  if (pass !== $('login-pass2').value) return setMsg('كلمتا المرور غير متطابقتين.');
   await emailRegister(email, pass);
 });
 
 $('btn-forgot').onclick = (e) => busy(e.currentTarget, async () => {
   const { email } = creds();
-  if (!email) return setMsg('اكتب الإيميل الأول وبعدين اضغط "نسيت كلمة السر؟".');
+  if (!email) return setMsg('اكتب البريد الإلكتروني أولًا ثم اضغط "نسيت كلمة المرور؟".');
   await resetPassword(email);
-  setMsg('بعتنالك رابط إعادة تعيين كلمة السر على الإيميل. شوف كمان في Spam.', true);
+  setMsg('أرسلنا رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. تحقق أيضًا من البريد غير الهام (Spam).', true);
 });
 
 $('btn-logout').onclick = () => logout();
 
 if (!configured) {
-  setMsg('لسه ماضفتش إعدادات Firebase. افتح firebase-config.js والصق الإعدادات.');
-  ['btn-google', 'btn-login', 'btn-register', 'btn-forgot'].forEach((id) => { $(id).disabled = true; });
+  setMsg('لم تُضَف إعدادات Firebase بعد. افتح firebase-config.js والصق الإعدادات.');
+  ['btn-login', 'btn-register', 'btn-forgot', 'btn-to-register'].forEach((id) => { $(id).disabled = true; });
 }
 
 // ---------- الداتا لكل مستخدم ----------
@@ -548,23 +569,168 @@ function startData(uid) {
   });
 }
 
-watchAuth((user) => {
+// ---------- الاشتراك ----------
+let accessUnsub = null, payUnsub = null, accessUser = null, lastAccess = { state: 'loading' }, wantPay = false;
+
+const mins = (ms) => Math.max(1, Math.ceil(ms / 60000));
+function renderPlan() {
+  const line = $('plan-line');
+  const a = lastAccess;
+  if (a.state === 'trial') {
+    $('plan-text').textContent = 'تجربة مجانية: يتبقى ' + fmt(mins(a.msLeft)) + ' دقيقة.';
+    line.classList.remove('hidden');
+  } else {
+    line.classList.add('hidden');
+  }
+  $('btn-admin').classList.toggle('hidden', !isAdminUser(accessUser));
+}
+
+const PAY_TEXT = {
+  pending: 'تم استلام طلبك وهو قيد المراجعة. سيُفعَّل حسابك بعد التحقق من التحويل.',
+  rejected: 'لم يُقبل الطلب السابق. تأكد من بيانات التحويل وأرسل الطلب مرة أخرى.',
+};
+function renderPayStatus(p) {
+  const el = $('pay-status');
+  const st = p && p.status;
+  if (st === 'pending' || st === 'rejected') {
+    el.textContent = PAY_TEXT[st];
+    el.className = 'pay-status' + (st === 'rejected' ? ' bad' : '');
+  } else {
+    el.className = 'pay-status hidden';
+  }
+  $('btn-pay-send').textContent = st === 'pending' ? 'تحديث بيانات الطلب' : 'أرسلت الدفع';
+}
+
+function showLocked(notice, canGoBack) {
   stopData();
   resetData();
+  $('pay-price').textContent = fmt(PRICE);
+  $('pay-ipa').textContent = IPA;
+  $('pay-ref').textContent = accessUser ? refCode(accessUser.uid) : '';
+  $('lock-notice').textContent = notice || '';
+  $('btn-pay-back').classList.toggle('hidden', !canGoBack);
+  $('lock-title').textContent = canGoBack ? 'اشترك في دفتر النقوط' : 'فعّل دفترك';
+  $('pay-msg').textContent = '';
+  show('screen-locked');
+}
+
+function onAccess(a) {
+  lastAccess = a;
+  if (!accessUser) return;
+  if (a.state === 'trial' || a.state === 'paid') {
+    renderPlan();
+    if (wantPay && a.state === 'trial') { showLocked('', true); return; }
+    wantPay = false;
+    if (!state.unsub) { startData(accessUser.uid); }
+    if (state.screen !== 'screen-home' && state.screen !== 'screen-person') { renderHome(); show('screen-home'); }
+    updateSync();
+  } else if (a.state === 'locked') {
+    wantPay = false;
+    renderPlan();
+    showLocked('انتهت الفترة التجريبية أو لم يُفعَّل اشتراكك بعد. بياناتك محفوظة وستعود إليك فور التفعيل.', false);
+  } else if (a.state === 'error') {
+    renderPlan();
+    showLocked('تعذّر التحقق من اشتراكك. تأكد من الاتصال بالإنترنت ثم أعد فتح التطبيق.', false);
+  }
+}
+
+$('btn-plan-pay').onclick = () => { wantPay = true; showLocked('', true); };
+$('btn-pay-back').onclick = () => { wantPay = false; onAccess(lastAccess); };
+$('btn-lock-logout').onclick = () => logout();
+$('btn-admin').onclick = () => { location.href = 'admin.html'; };
+
+const copyText = async (text, btn) => {
+  try { await navigator.clipboard.writeText(text); } catch (e) { /* يبقى النص قابلًا للتحديد */ }
+  const old = btn.textContent; btn.textContent = 'تم النسخ'; setTimeout(() => { btn.textContent = old; }, 1500);
+};
+$('btn-copy-ipa').onclick = (e) => copyText(IPA, e.currentTarget);
+$('btn-copy-ref').onclick = (e) => copyText($('pay-ref').textContent, e.currentTarget);
+
+$('btn-pay-send').onclick = async (e) => {
+  const name = norm($('pay-name').value), transfer = norm($('pay-transfer').value);
+  const msg = $('pay-msg');
+  msg.className = 'msg';
+  if (!name || !transfer) { msg.textContent = 'اكتب اسم صاحب التحويل ورقم العملية أو الهاتف.'; return; }
+  e.currentTarget.disabled = true;
+  try {
+    await submitPayment(accessUser, { name, transfer });
+    msg.textContent = 'تم إرسال الطلب.';
+    msg.className = 'msg ok';
+  } catch (err) {
+    msg.textContent = 'تعذّر إرسال الطلب. تحقق من الاتصال وحاول مرة أخرى.';
+  } finally {
+    e.currentTarget.disabled = false;
+  }
+};
+
+// تغيير كلمة المرور: نرسل رابط تأكيد إلى بريد المستخدم، ولا تتغير الكلمة إلا بعد فتحه واختيار كلمة جديدة
+document.querySelectorAll('.js-change-pass').forEach((b) => {
+  b.onclick = async () => {
+    if (!accessUser || !accessUser.email) return;
+    b.disabled = true;
+    try {
+      await resetPassword(accessUser.email);
+      toast('أرسلنا رابط التأكيد إلى ' + accessUser.email + '. لن تتغير كلمة المرور قبل فتحه.');
+    } catch (e) {
+      toast(errorText(e), true);
+    } finally {
+      b.disabled = false;
+    }
+  };
+});
+
+// ---------- تأكيد البريد الإلكتروني ----------
+const vmsg = (t, ok) => { const m = $('verify-msg'); m.textContent = t; m.className = 'msg' + (ok ? ' ok' : ''); };
+$('btn-resend').onclick = async (e) => {
+  e.currentTarget.disabled = true;
+  try { await resendVerification(); vmsg('أعدنا إرسال رسالة التأكيد. تحقق من البريد والبريد غير الهام.', true); }
+  catch (err) { vmsg(errorText(err)); }
+  finally { e.currentTarget.disabled = false; }
+};
+$('btn-verified').onclick = async (e) => {
+  e.currentTarget.disabled = true;
+  try {
+    const u = await reloadCurrentUser();
+    if (u && u.emailVerified) enter(u);
+    else vmsg('لم يتم التأكيد بعد. افتح الرابط في رسالة البريد ثم حاول مرة أخرى.');
+  } catch (err) { vmsg(errorText(err)); }
+  finally { e.currentTarget.disabled = false; }
+};
+$('btn-verify-logout').onclick = () => logout();
+
+function enter(user) {
+  if (accessUnsub) { accessUnsub(); accessUnsub = null; }
+  if (payUnsub) { payUnsub(); payUnsub = null; }
+  stopData();
+  resetData();
+  wantPay = false;
+  lastAccess = { state: 'loading' };
   if (user) {
     state.uid = user.uid;
+    accessUser = user;
     $('user-email').textContent = user.email || user.displayName || '';
     $('login-pass').value = '';
+    $('pay-name').value = '';
+    $('pay-transfer').value = '';
     setMsg('');
-    startData(user.uid);
-    renderHome();
-    updateSync();
-    show('screen-home');
+    if (!user.emailVerified) {
+      // لا يُفتح الدفتر ولا تبدأ التجربة قبل تأكيد ملكية البريد
+      $('verify-email').textContent = user.email || '';
+      vmsg('');
+      show('screen-verify');
+      return;
+    }
+    show('screen-loading');
+    payUnsub = watchPayment(user.uid, renderPayStatus);
+    accessUnsub = watchAccess(user, onAccess);
   } else {
     state.uid = null;
+    accessUser = null;
+    loginMode(false);
     show('screen-login');
   }
-});
+}
+watchAuth(enter);
 
 // تثبيت التطبيق وفتحه من غير نت
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

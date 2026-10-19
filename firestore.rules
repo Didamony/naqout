@@ -1,9 +1,59 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // كل مستخدم يقرا ويكتب في دفتره هو بس
-    match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+    function signedIn() { return request.auth != null; }
+    function verified() { return request.auth.token.email_verified == true; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid && verified(); }
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == 'medsyncplus@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function hasPaid(uid) {
+      return exists(/databases/$(database)/documents/users/$(uid)/account/paid);
+    }
+    function inTrial(uid) {
+      let p = /databases/$(database)/documents/users/$(uid)/account/trial;
+      return exists(p) && get(p).data.trialStartedAt + duration.value(2, 'h') > request.time;
+    }
+    function hasAccess(uid) { return isAdmin() || hasPaid(uid) || inTrial(uid); }
+
+    // التجربة: تُنشأ مرة واحدة بوقت الخادم، ولا يمكن تعديلها أو حذفها
+    match /users/{uid}/account/trial {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['trialStartedAt'])
+        && request.resource.data.trialStartedAt == request.time;
+      allow update, delete: if false;
+    }
+
+    // التفعيل: يكتبه المدير فقط
+    match /users/{uid}/account/paid {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // بيانات الدفتر: لصاحبها فقط، وبشرط تجربة سارية أو اشتراك مفعّل
+    match /users/{uid}/people/{id} {
+      allow read, write: if isOwner(uid) && hasAccess(uid);
+    }
+    match /users/{uid}/transactions/{id} {
+      allow read, write: if isOwner(uid) && hasAccess(uid);
+    }
+
+    // طلبات الدفع: المشترك يرسل طلبه ويقرؤه، والمدير يقرأ الكل ويعدّل الحالة
+    match /payments/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if (isOwner(uid)
+          && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'transfer', 'ref', 'status', 'createdAt'])
+          && request.resource.data.uid == uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.name is string && request.resource.data.name.size() <= 80
+          && request.resource.data.transfer is string && request.resource.data.transfer.size() <= 80
+          && request.resource.data.createdAt == request.time)
+        || isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }

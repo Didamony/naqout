@@ -269,3 +269,23 @@ button.card strong { font-size: 24px; }
   z-index: 30; max-width: 90vw; text-align: center;
 }
 .toast.error { background: var(--out-btn); color: #fff; }
+
+/* ---------- الاشتراك ---------- */
+.pay-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px; }
+.pay-box h3 { margin: 0 0 6px; }
+.price { margin: 8px 0 14px; font-size: 18px; }
+.price strong { font-size: 30px; color: var(--brand); }
+.pay-steps { padding-inline-start: 20px; margin: 0 0 14px; line-height: 1.9; }
+.copy-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 12px; }
+.copy-row code { font-size: 15px; overflow-wrap: anywhere; user-select: all; }
+.copy-row .link { margin-top: 0; font-weight: 700; }
+.pay-status { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-weight: 600; text-align: center; }
+.pay-status.bad { background: var(--out-bg); color: var(--out); }
+.plan-line { margin: 0 0 8px; font-size: 13px; color: var(--warn); font-weight: 600; }
+.plan-line .link { margin-top: 0; font-size: 13px; font-weight: 800; }
+.adm-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+.adm-card .row2 { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; font-size: 14px; }
+.adm-card .row2 span:first-child { color: var(--muted); }
+.adm-card .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.adm-card .btn { padding: 10px; font-size: 15px; }

@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/fireba
 import {
   getAuth, onAuthStateChanged, signOut,
   GoogleAuthProvider, signInWithPopup, signInWithRedirect,
-  signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification,
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -39,22 +39,36 @@ export async function googleLogin() {
 }
 
 export const emailLogin = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
-export const emailRegister = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
+// التسجيل بالبريد: ننشئ الحساب ثم نرسل رسالة تأكيد إلى البريد (لا يُفتح الدفتر قبل التأكيد)
+export async function emailRegister(email, pass) {
+  const cred = await createUserWithEmailAndPassword(auth, email, pass);
+  try { await sendEmailVerification(cred.user); } catch (e) { /* يمكنه طلب الرسالة مرة أخرى من شاشة التأكيد */ }
+  return cred;
+}
+export const resendVerification = () => sendEmailVerification(auth.currentUser);
+// بعد فتح رابط التأكيد من البريد: نحدّث بيانات المستخدم والتوكن ليعرف الخادم أن البريد مؤكَّد
+export async function reloadCurrentUser() {
+  const u = auth.currentUser;
+  if (!u) return null;
+  await u.reload();
+  await u.getIdToken(true);
+  return auth.currentUser;
+}
 export const resetPassword = (email) => sendPasswordResetEmail(auth, email);
 export const logout = () => signOut(auth);
 
 const MESSAGES = {
-  "auth/invalid-email": "الإيميل مكتوب غلط.",
-  "auth/missing-password": "اكتب كلمة السر.",
-  "auth/invalid-credential": "الإيميل أو كلمة السر غلط. لو سجلت بحساب جوجل استخدم زرار جوجل.",
-  "auth/wrong-password": "الإيميل أو كلمة السر غلط.",
-  "auth/user-not-found": "الإيميل أو كلمة السر غلط.",
-  "auth/email-already-in-use": "الإيميل ده عنده حساب بالفعل. سجّل دخول، أو اضغط \"نسيت كلمة السر؟\".",
-  "auth/weak-password": "كلمة السر ضعيفة. لازم 6 حروف أو أرقام على الأقل.",
-  "auth/too-many-requests": "محاولات كتير. استنى شوية وجرّب تاني.",
-  "auth/network-request-failed": "مفيش اتصال بالنت.",
-  "auth/unauthorized-domain": "العنوان ده مش مضاف في Firebase (Authentication ← Settings ← Authorized domains).",
-  "auth/operation-not-allowed": "طريقة الدخول دي مش مفعّلة في Firebase (Authentication ← Sign-in method).",
+  "auth/invalid-email": "البريد الإلكتروني غير صحيح.",
+  "auth/missing-password": "اكتب كلمة المرور.",
+  "auth/invalid-credential": "البريد الإلكتروني أو كلمة المرور غير صحيحة. إن كنت سجّلت بحساب جوجل فاستخدم زر جوجل.",
+  "auth/wrong-password": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  "auth/user-not-found": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+  "auth/email-already-in-use": "لهذا البريد حساب بالفعل. سجّل الدخول، أو اضغط \"نسيت كلمة المرور؟\".",
+  "auth/weak-password": "كلمة المرور ضعيفة. يجب أن تتكون من 6 أحرف أو أرقام على الأقل.",
+  "auth/too-many-requests": "محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.",
+  "auth/network-request-failed": "لا يوجد اتصال بالإنترنت.",
+  "auth/unauthorized-domain": "هذا العنوان غير مضاف في Firebase (Authentication ← Settings ← Authorized domains).",
+  "auth/operation-not-allowed": "طريقة الدخول هذه غير مفعّلة في Firebase (Authentication ← Sign-in method).",
   "auth/popup-closed-by-user": "",
   "auth/cancelled-popup-request": "",
 };
@@ -62,5 +76,5 @@ const MESSAGES = {
 export function errorText(e) {
   const code = e && e.code;
   if (code in MESSAGES) return MESSAGES[code];
-  return "حصلت مشكلة" + (code ? " (" + code + ")" : "") + ". جرّب تاني.";
+  return "حدثت مشكلة" + (code ? " (" + code + ")" : "") + ". حاول مرة أخرى.";
 }

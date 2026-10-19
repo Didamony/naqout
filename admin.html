@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="robots" content="noindex">
+  <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
+  <title>إدارة الاشتراكات</title>
+  <link rel="icon" href="icon-192.png?v=2">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="a-loading" class="screen"><p class="muted center" style="padding-top:30vh">جاري التحميل...</p></section>
+
+  <section id="a-login" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">🔑</div>
+      <h1>إدارة الاشتراكات</h1>
+      <p class="muted">سجّل الدخول بحساب المدير.</p>
+      <button class="btn btn-google" id="a-google" type="button">الدخول بحساب جوجل</button>
+      <div class="divider"><span>أو</span></div>
+      <input type="email" id="a-email" placeholder="البريد الإلكتروني للمدير" autocomplete="email">
+      <input type="password" id="a-pass" placeholder="كلمة المرور" autocomplete="current-password">
+      <p class="msg" id="a-msg" role="status"></p>
+      <button class="btn btn-primary" id="a-login-btn" type="button">دخول</button>
+      <button class="link" id="a-forgot" type="button">تعيين كلمة المرور أو نسيتها؟ (رابط إلى بريد المدير)</button>
+    </div>
+  </section>
+
+  <section id="a-main" class="screen hidden">
+    <header class="topbar">
+      <h2>إدارة الاشتراكات</h2>
+      <div class="bar-actions">
+        <a class="icon-btn wide" href="./" style="display:inline-flex;align-items:center;text-decoration:none;color:inherit">التطبيق</a>
+        <button class="icon-btn wide" id="a-logout" type="button">خروج</button>
+      </div>
+    </header>
+    <p class="msg" id="a-err" role="alert"></p>
+    <div class="adm-card">
+      <div class="row2"><span>حساب المدير</span><span id="a-who" dir="ltr"></span></div>
+      <button class="btn btn-ghost" id="a-chpass" type="button" style="margin-top:8px">تغيير كلمة المرور (بتأكيد من البريد)</button>
+      <p class="msg" id="a-pass-msg" role="status"></p>
+    </div>
+
+    <h3 class="section-title">طلبات قيد المراجعة <span id="n-pending"></span></h3>
+    <div id="list-pending"></div>
+    <p class="muted center hidden" id="empty-pending">لا توجد طلبات.</p>
+
+    <h3 class="section-title">المشتركون المفعّلون <span id="n-approved"></span></h3>
+    <div id="list-approved"></div>
+
+    <h3 class="section-title">طلبات مرفوضة أو موقوفة <span id="n-other"></span></h3>
+    <div id="list-other"></div>
+  </section>
+
+<script type="module" src="admin.js"></script>
+</body>
+</html>

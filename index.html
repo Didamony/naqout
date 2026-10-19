@@ -10,9 +10,9 @@
   <meta name="apple-mobile-web-app-title" content="النقوط">
   <script>try{var t=localStorage.getItem("theme");if(t)document.documentElement.setAttribute("data-theme",t)}catch(e){}</script>
   <title>دفتر النقوط</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="manifest" href="manifest.json?v=2">
+  <link rel="icon" href="icon-192.png?v=2">
+  <link rel="apple-touch-icon" href="icon-180.png?v=2">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,16 +27,67 @@
     <div class="login-box">
       <div class="logo">📒</div>
       <h1>دفتر النقوط</h1>
-      <p class="muted">سجّل دخولك عشان تفتح دفترك من أي موبايل</p>
-      <button class="btn btn-google" id="btn-google" type="button">الدخول بحساب جوجل</button>
-      <div class="divider"><span>أو</span></div>
-      <input type="email" id="login-email" placeholder="الإيميل" autocomplete="email">
-      <input type="password" id="login-pass" placeholder="كلمة السر" autocomplete="current-password">
+      <p class="muted" id="login-sub">سجّل الدخول ببريدك الإلكتروني وكلمة المرور لتفتح دفترك من أي هاتف.</p>
+      <p class="muted" id="login-note" style="font-size:13px">بياناتك لا يراها غيرك، ولا يُفتح حسابك إلا بكلمة المرور.</p>
+      <input type="email" id="login-email" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input type="password" id="login-pass" placeholder="كلمة المرور" autocomplete="current-password">
+      <input type="password" id="login-pass2" class="hidden" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password">
       <p class="msg" id="login-msg" role="status"></p>
-      <button class="btn btn-primary" id="btn-login" type="button">دخول</button>
-      <button class="link" id="btn-forgot" type="button">نسيت كلمة السر؟</button>
-      <button class="link" id="btn-register" type="button">مفيش حساب؟ سجّل بالإيميل</button>
+      <button class="btn btn-primary" id="btn-login" type="button">تسجيل الدخول</button>
+      <button class="btn btn-primary hidden" id="btn-register" type="button">إنشاء الحساب</button>
+      <button class="link" id="btn-forgot" type="button">نسيت كلمة المرور؟</button>
+      <button class="link" id="btn-to-register" type="button">ليس لديك حساب؟ سجّل الآن</button>
+      <button class="link hidden" id="btn-to-login" type="button">لديك حساب؟ سجّل الدخول</button>
       <button class="link theme-toggle" type="button"></button>
+    </div>
+  </section>
+
+  <!-- تأكيد البريد الإلكتروني (بعد التسجيل بالبريد) -->
+  <section id="screen-verify" class="screen hidden">
+    <div class="login-box">
+      <div class="logo">✉️</div>
+      <h1>أكِّد بريدك الإلكتروني</h1>
+      <p class="muted">أرسلنا رسالة تأكيد إلى <strong id="verify-email" dir="ltr"></strong>. افتح الرابط الموجود فيها (وتحقق من البريد غير الهام Spam)، ثم اضغط الزر أدناه.</p>
+      <p class="msg" id="verify-msg" role="status"></p>
+      <button class="btn btn-primary" id="btn-verified" type="button">فعّلت بريدي، تابع</button>
+      <button class="link" id="btn-resend" type="button">إعادة إرسال رسالة التأكيد</button>
+      <button class="link" id="btn-verify-logout" type="button">خروج واستخدام بريد آخر</button>
+    </div>
+  </section>
+
+  <!-- شاشة الاشتراك (تظهر بعد انتهاء التجربة أو عند الضغط على "اشترك") -->
+  <section id="screen-locked" class="screen hidden">
+    <header class="topbar">
+      <h2>الاشتراك</h2>
+      <div class="bar-actions">
+        <button class="icon-btn wide hidden" id="btn-pay-back" type="button">رجوع</button>
+        <button class="icon-btn wide theme-toggle" type="button"></button>
+        <button class="icon-btn wide" id="btn-lock-logout" type="button">خروج</button>
+      </div>
+    </header>
+
+    <p class="msg" id="lock-notice" role="status"></p>
+    <p class="user-line"><button class="link js-change-pass" type="button">تغيير كلمة المرور (بتأكيد من البريد)</button></p>
+    <div class="pay-box">
+      <h3 id="lock-title">فعّل دفترك</h3>
+      <p class="muted" id="lock-sub">اشتراك مرة واحدة مدى الحياة. بياناتك محفوظة وتعود إليك فور التفعيل.</p>
+      <p class="price"><strong id="pay-price"></strong> جنيهًا مصريًا</p>
+
+      <ol class="pay-steps">
+        <li>حوّل المبلغ عبر إنستاباي إلى العنوان:
+          <div class="copy-row"><code id="pay-ipa" dir="ltr"></code><button class="link" id="btn-copy-ipa" type="button">نسخ</button></div>
+        </li>
+        <li>اكتب هذا الرمز في ملاحظة التحويل:
+          <div class="copy-row"><code id="pay-ref" dir="ltr"></code><button class="link" id="btn-copy-ref" type="button">نسخ</button></div>
+        </li>
+        <li>املأ البيانات التالية ثم اضغط «أرسلت الدفع».</li>
+      </ol>
+
+      <input type="text" id="pay-name" placeholder="اسم صاحب التحويل" autocomplete="name">
+      <input type="text" id="pay-transfer" placeholder="رقم العملية أو رقم هاتف المحوِّل" autocomplete="off">
+      <p class="msg" id="pay-msg" role="status"></p>
+      <button class="btn btn-primary" id="btn-pay-send" type="button">أرسلت الدفع</button>
+      <p class="pay-status hidden" id="pay-status" role="status"></p>
     </div>
   </section>
 
@@ -46,11 +97,14 @@
       <h2>دفتر النقوط</h2>
       <div class="bar-actions">
         <button class="icon-btn wide theme-toggle" type="button"></button>
+        <button class="icon-btn wide hidden" id="btn-admin" type="button">الإدارة</button>
         <button class="icon-btn wide" id="btn-export" type="button">تصدير</button>
         <button class="icon-btn wide" id="btn-logout" type="button">خروج</button>
       </div>
     </header>
     <p class="muted user-line"><span id="user-email"></span> • <span id="sync-line"></span></p>
+    <p class="user-line"><button class="link js-change-pass" type="button">تغيير كلمة المرور (بتأكيد من البريد)</button></p>
+    <p class="plan-line hidden" id="plan-line"><span id="plan-text"></span> <button class="link" id="btn-plan-pay" type="button">اشترك الآن</button></p>
     <p class="msg hidden" id="data-error" role="alert"></p>
 
     <div class="summary">
@@ -92,9 +146,9 @@
       <button class="btn btn-out" id="btn-add-out" type="button">+ عليا</button>
     </div>
 
-    <h3 class="section-title">المعاملات (دوس على أي معاملة للتعديل أو الحذف)</h3>
+    <h3 class="section-title">المعاملات (اضغط على أي معاملة للتعديل أو الحذف)</h3>
     <ul id="tx-list" class="list"></ul>
-    <p id="empty-tx" class="muted center hidden">مفيش معاملات لسه.</p>
+    <p id="empty-tx" class="muted center hidden">لا توجد معاملات بعد.</p>
   </section>
 
   <!-- نافذة إضافة / تعديل شخص -->
@@ -102,7 +156,7 @@
     <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="p-title">
       <h3 id="p-title">شخص جديد</h3>
       <input type="text" id="p-name" placeholder="الاسم" autocomplete="off">
-      <input type="tel" id="p-phone" placeholder="رقم التليفون (اختياري)" dir="ltr" style="text-align:right">
+      <input type="tel" id="p-phone" placeholder="رقم الهاتف (اختياري)" dir="ltr" style="text-align:right">
       <label class="lbl" for="p-due">موعد السداد (اختياري)</label>
       <input type="date" id="p-due">
       <p class="msg" id="p-msg" role="status"></p>
