@@ -1,7 +1,7 @@
 // Service worker: يخلي التطبيق يفتح من غير نت.
 // ملفات التطبيق: من النت الأول (عشان التحديثات تظهر فوراً) وبعدها من الكاش لو مفيش نت.
 // مكتبات Firebase (نسخة ثابتة): من الكاش الأول.
-const CACHE = 'naqout-v4';
+const CACHE = 'naqout-v6';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'auth.js', 'db.js', 'firebase-config.js',
   'manifest.json', 'billing.js', 'admin.html', 'admin.js', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 

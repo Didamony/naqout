@@ -1,48 +1,66 @@
 /* الألوان كلها tokens: فاتح افتراضي، وداكن تلقائي حسب إعداد الجهاز أو بزرار المظهر */
 :root {
-  --brand: #0f766e;
+  --brand: #5b4bdb;
+  --brand-2: #8a6cf7;
   --on-brand: #ffffff;
-  --in: #15803d;
-  --out: #b91c1c;
-  --in-btn: #15803d;
-  --out-btn: #b91c1c;
-  --bg: #f4f6f8;
+  --in: #0b9483;
+  --out: #d93b73;
+  --in-btn: #0b9483;
+  --out-btn: #d93b73;
+  --warn: #5b4bdb;
+  --warn-bg: #ece8ff;
+  --good-bg: #d6f5ef;
+  --bad-bg: #fde3ec;
+  --out-bg: #fde3ec;
+  --bg: #f4f2ff;
   --card: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --line: #e5e7eb;
-  --scrim: rgba(0, 0, 0, .45);
-  --shadow: rgba(0, 0, 0, .25);
+  --text: #1b1740;
+  --muted: #6a6791;
+  --line: #e1ddf7;
+  --scrim: rgba(20, 12, 60, .5);
+  --shadow: rgba(60, 40, 160, .22);
   --radius: 14px;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --brand: #2dd4bf;
-    --on-brand: #05201c;
-    --in: #4ade80;
-    --out: #fb8a80;
-    --bg: #0e1514;
-    --card: #172220;
-    --text: #e6edeb;
-    --muted: #98a9a5;
-    --line: #2b3b38;
-    --scrim: rgba(0, 0, 0, .65);
+    --brand: #9a8dff;
+    --brand-2: #6c5cf0;
+    --on-brand: #0e0b2b;
+    --in: #3ee0c8;
+    --out: #ff7aa6;
+    --warn: #b4aaff;
+    --warn-bg: #272059;
+    --good-bg: #0f3a36;
+    --bad-bg: #44162d;
+    --out-bg: #44162d;
+    --bg: #0c0a22;
+    --card: #16133a;
+    --text: #efedff;
+    --muted: #a5a2d2;
+    --line: #2c2866;
+    --scrim: rgba(4, 2, 20, .7);
     --shadow: rgba(0, 0, 0, .6);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --brand: #2dd4bf;
-  --on-brand: #05201c;
-  --in: #4ade80;
-  --out: #fb8a80;
-  --bg: #0e1514;
-  --card: #172220;
-  --text: #e6edeb;
-  --muted: #98a9a5;
-  --line: #2b3b38;
-  --scrim: rgba(0, 0, 0, .65);
+  --brand: #9a8dff;
+  --brand-2: #6c5cf0;
+  --on-brand: #0e0b2b;
+  --in: #3ee0c8;
+  --out: #ff7aa6;
+  --warn: #b4aaff;
+  --warn-bg: #272059;
+  --good-bg: #0f3a36;
+  --bad-bg: #44162d;
+  --out-bg: #44162d;
+  --bg: #0c0a22;
+  --card: #16133a;
+  --text: #efedff;
+  --muted: #a5a2d2;
+  --line: #2c2866;
+  --scrim: rgba(4, 2, 20, .7);
   --shadow: rgba(0, 0, 0, .6);
   color-scheme: dark;
 }
@@ -98,7 +116,7 @@ button, input { color: inherit; }
   cursor: pointer;
   width: 100%;
 }
-.btn-primary { background: var(--brand); color: var(--on-brand); }
+.btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--on-brand); }
 .btn-ghost { background: var(--line); color: var(--text); }
 .btn-in { background: var(--in-btn); color: #fff; }
 .btn-out { background: var(--out-btn); color: #fff; }
@@ -235,11 +253,8 @@ button.card strong { font-size: 24px; }
 .btn:disabled { opacity: .6; cursor: wait; }
 
 /* ---------- الخطوات 3-6: مواعيد، تعديل، رسايل ---------- */
-:root { --warn: #b45309; --warn-bg: #fdf0dc; --out-bg: #fbe6e4; }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --warn: #fbbf24; --warn-bg: #3a2a0c; --out-bg: #3a1a17; }
 }
-:root[data-theme="dark"] { --warn: #fbbf24; --warn-bg: #3a2a0c; --out-bg: #3a1a17; }
 
 .icon-btn.wide { width: auto; padding: 0 12px; font-size: 14px; font-weight: 600; }
 .lbl { display: block; font-size: 13px; color: var(--muted); margin: 2px 0 6px; }
@@ -289,3 +304,36 @@ button.card strong { font-size: 24px; }
 .adm-card .row2 span:first-child { color: var(--muted); }
 .adm-card .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .adm-card .btn { padding: 10px; font-size: 15px; }
+
+/* لوحة الإدارة */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 8px; text-align: center; }
+.stat b { display: block; font-size: 24px; color: var(--brand); }
+.stat.warn b { color: var(--warn); }
+.stat.good b { color: var(--in); }
+.stat span { font-size: 12px; color: var(--muted); }
+.tabs { display: flex; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; margin-bottom: 10px; }
+.tab { flex: 1; border: 0; background: none; border-radius: 10px; padding: 10px 4px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.tab.on { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--on-brand); }
+.badge:not(:empty) { display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--warn-bg); color: var(--warn); font-size: 12px; }
+.tab.on .badge:not(:empty) { background: rgba(255,255,255,.25); color: inherit; }
+.a-search { width: 100%; margin-bottom: 10px; }
+.adm-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.pill { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: var(--line); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.good { background: var(--good-bg); color: var(--in); }
+.pill.bad { background: var(--bad-bg); color: var(--out); }
+.acct summary { cursor: pointer; font-weight: 700; }
+.hidden { display: none !important; }
+
+/* روح وحيوية: خلفية متدرجة، ظلال ناعمة، وتفاصيل مرحة */
+body { background: radial-gradient(120% 60% at 100% 0%, color-mix(in srgb, var(--brand-2) 16%, transparent), transparent 60%), radial-gradient(90% 50% at 0% 100%, color-mix(in srgb, var(--in) 10%, transparent), transparent 60%), var(--bg); background-attachment: fixed; }
+.item, .adm-card, .stat, .tabs, .pay-box, .sum-card, .card { box-shadow: 0 6px 18px -10px var(--shadow); }
+.item { transition: transform .12s ease, box-shadow .12s ease; }
+.item:active { transform: scale(.985); }
+.btn-primary, .tab.on, .fab { box-shadow: 0 8px 18px -8px var(--shadow); }
+.btn { transition: transform .1s ease, filter .15s; }
+.btn:active { transform: scale(.97); }
+.topbar h2 { background: linear-gradient(135deg, var(--brand), var(--brand-2)); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
+.stat b { background: linear-gradient(135deg, var(--brand), var(--brand-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.stat.good b { background: none; color: var(--in); }
