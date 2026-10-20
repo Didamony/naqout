@@ -723,6 +723,11 @@ function enter(user) {
       show('screen-verify');
       return;
     }
+    if (isAdminUser(user)) { // حساب المدير للإدارة فقط: لا دفتر ولا اشتراك
+      show('screen-loading');
+      location.replace('admin.html');
+      return;
+    }
     show('screen-loading');
     payUnsub = watchPayment(user.uid, renderPayStatus);
     accessUnsub = watchAccess(user, onAccess);
