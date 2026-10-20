@@ -492,7 +492,7 @@ function loginMode(register) {
   $('btn-to-login').classList.toggle('hidden', !register);
   $('login-pass').autocomplete = register ? 'new-password' : 'current-password';
   $('login-sub').textContent = register
-    ? 'أنشئ حسابًا ببريدك الإلكتروني وكلمة مرور من 6 أحرف أو أرقام على الأقل. ستصلك رسالة تأكيد على بريدك، ولا يُفتح حسابك إلا بعد تأكيدها.'
+    ? 'أنشئ حسابًا ببريدك الإلكتروني وكلمة مرور قوية من 12 خانة على الأقل، تجمع بين الحروف والأرقام. ستصلك رسالة تأكيد على بريدك، ولا يُفتح حسابك إلا بعد تأكيدها.'
     : 'سجّل الدخول ببريدك الإلكتروني وكلمة المرور لتفتح دفترك من أي هاتف.';
   $('login-note').textContent = register
     ? 'يصلح أي بريد إلكتروني تملكه، والمهم أن تؤكده من الرسالة.'
@@ -512,6 +512,9 @@ $('btn-login').onclick = (e) => busy(e.currentTarget, async () => {
 $('btn-register').onclick = (e) => busy(e.currentTarget, async () => {
   const { email, pass } = creds();
   if (!email || !pass) return setMsg('اكتب البريد الإلكتروني وكلمة المرور لحسابك الجديد.');
+  if (pass.length < 12 || !/[A-Za-z؀-ۿ]/.test(pass) || !/[0-9٠-٩]/.test(pass)) {
+    return setMsg('كلمة المرور ضعيفة. اجعلها 12 خانة على الأقل، وتجمع بين الحروف والأرقام.');
+  }
   if (pass !== $('login-pass2').value) return setMsg('كلمتا المرور غير متطابقتين.');
   await emailRegister(email, pass);
 });

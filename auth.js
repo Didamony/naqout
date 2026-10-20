@@ -64,7 +64,7 @@ const MESSAGES = {
   "auth/wrong-password": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "auth/user-not-found": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "auth/email-already-in-use": "لهذا البريد حساب بالفعل. سجّل الدخول، أو اضغط \"نسيت كلمة المرور؟\".",
-  "auth/weak-password": "كلمة المرور ضعيفة. يجب أن تتكون من 6 أحرف أو أرقام على الأقل.",
+  "auth/weak-password": "كلمة المرور ضعيفة. اجعلها 12 خانة على الأقل، وتجمع بين الحروف والأرقام.",
   "auth/too-many-requests": "محاولات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.",
   "auth/network-request-failed": "لا يوجد اتصال بالإنترنت.",
   "auth/unauthorized-domain": "هذا العنوان غير مضاف في Firebase (Authentication ← Settings ← Authorized domains).",
